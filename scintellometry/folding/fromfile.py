@@ -8,8 +8,7 @@ msblsb_bits = np.array([-16, 15], np.int8)
 twopiby256 = 2.*np.pi / 256.
 
 NP_DTYPES = {'1bit': 'i1', '4bit': 'i1', 'nibble': 'i1',
-             'ci1': '2i1', 'ci1,ci1': '2i1,2i1'}
-
+             'ci1': '2i1', 'ci1,ci1': '2i1,2i1', 'cu4bit': 'u1'}
 
 def fromfile(file, dtype, count, verbose=False):
     """Read count bytes, with type dtype which can be bits.
@@ -88,6 +87,14 @@ def fromfile(file, dtype, count, verbose=False):
         amp = np.sqrt(-2.*np.log(1.-amp))
         phase = (iph.astype(np.float32) + 8.) * twopiby256
         return amp * np.exp(1.j * np.pi * phase)
+    #elif dtype == 'cu4bit1':
+    #    raw_re = ((raw / 16).view(np.int8) - 8).astype(np.int32)
+    #    raw_im = ((raw % 16).view(np.int8) - 8).astype(np.int32)
+    #    return (raw_re + 1.0j * raw_im)
+    elif dtype == 'cu4bit':
+        raw_re = ((raw >> 4).astype(np.int32) - 8)
+        raw_im = ((raw & 0xf).astype(np.int32) - 8)
+        return (raw_re + 1.0j * raw_im)
     else:
         # this should never happen, but just in case...
         raise TypeError('data type "{}" not understood (but in NP_DTYPES!)'
