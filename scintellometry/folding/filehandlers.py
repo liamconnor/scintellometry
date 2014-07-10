@@ -228,7 +228,36 @@ class MultiFile(psrFITS):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
+#           _____   ____      ___   
+#     /\   |  __ \ / __ \     | |    
+#    /  \  | |__) | |  | | ___| |__  
+#   / /\ \ |  _  /| |  | |/ __| '_ \ 
+#  / ____ \| | \ \| |__| | (__| | | |
+# /_/    \_\_|  \_\\____/ \___|_| |_
 
+class AROchdata(MultiFile):
+
+    telescope = 'AROch'
+
+    def __init__(self, raw_files, comm=None, blocksize=2**24,
+                 refloat=True, samplerate=200.*u.MHz):
+
+        self.nchan = 512
+        self.fedge = 100
+        self.fedge_at_top = 200
+        self.blocksize = blocksize
+        self.samplerate = samplerate
+        self.dtsample = (1./samplerate).to(u.s)
+        self.fh_raw = []
+        self.time0 = Time(0, format='unix')
+
+    def __repr__(self):
+        return ("<open lofar polarization pair {}>"
+                .format(self.fh_raw))
+
+    def close(self):
+        for fh in self.fh_raw:
+            fh.close()
 
 #    ____  ____   ___
 #   /    ||    \ /   \
@@ -558,6 +587,8 @@ class LOFARdata_Pcombined(MultiFile):
                                                    'per_channel_blocksize',
                                                    2**18))
                        for raw_files in raw_files_list]
+        print("FHRAW")
+        print(self.fh_raw)
         self.fh_links = []
         # make sure basic properties of the files are the same
         for prop in ['dtype', 'itemsize', 'time0', 'samplerate',
