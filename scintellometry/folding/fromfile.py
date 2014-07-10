@@ -87,10 +87,10 @@ def fromfile(file, dtype, count, verbose=False):
         amp = np.sqrt(-2.*np.log(1.-amp))
         phase = (iph.astype(np.float32) + 8.) * twopiby256
         return amp * np.exp(1.j * np.pi * phase)
-    #elif dtype == 'cu4bit1':
-    #    raw_re = ((raw / 16).view(np.int8) - 8).astype(np.int32)
-    #    raw_im = ((raw % 16).view(np.int8) - 8).astype(np.int32)
-    #    return (raw_re + 1.0j * raw_im)
+#    elif dtype == 'cu4bit':
+#        raw_re = ((raw // 16).view(np.int8) - 8).astype(np.int32)
+#        raw_im = ((raw % 16).view(np.int8) - 8).astype(np.int32)
+#        return (raw_re + 1.0j * raw_im)
     elif dtype == 'cu4bit':
         raw_re = ((raw >> 4).astype(np.int32) - 8)
         raw_im = ((raw & 0xf).astype(np.int32) - 8)
