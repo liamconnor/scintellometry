@@ -247,9 +247,28 @@ class AROchdata(MultiFile):
         self.fedge_at_top = 200
         self.blocksize = blocksize
         self.samplerate = samplerate
+        self.recordsize = 1 # Not actually sure what this is
         self.dtsample = (1./samplerate).to(u.s)
-        self.fh_raw = []
+        self.fh_raw = [] 
         self.time0 = Time(0, format='unix')
+        self.setsize = 10
+
+    def ntint(self, nchan):
+        """
+        number of samples in a frequency bin
+        this is baseband data so need to know number of channels we're making
+        """
+        return self.setsize // (2*nchan)
+    def ntimebins(self, t0, t1):
+        """
+        determine the number of timebins between UTC start time 't0'
+        and end time 't1'
+        """
+        t0 = Time(t0, scale='utc')
+        t1 = Time(t1, scale='utc')
+        nt = ((t1-t0) / self.dtsample /
+              (self.setsize)).to(u.dimensionless_unscaled).value
+        return np.ceil(nt).astype(int)
 
     def __repr__(self):
         return ("<open lofar polarization pair {}>"
@@ -587,8 +606,6 @@ class LOFARdata_Pcombined(MultiFile):
                                                    'per_channel_blocksize',
                                                    2**18))
                        for raw_files in raw_files_list]
-        print("FHRAW")
-        print(self.fh_raw)
         self.fh_links = []
         # make sure basic properties of the files are the same
         for prop in ['dtype', 'itemsize', 'time0', 'samplerate',
