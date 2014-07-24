@@ -80,6 +80,7 @@ def fold(fh, comm, samplerate, fedge, fedge_at_top, nchan,
         return a subint fits table for rank == 0 (None otherwise)
 
     """
+    do_waterfall=True
     assert dedisperse in (None, 'incoherent', 'by-channel', 'coherent')
     assert nchan % fh.nchan == 0
     if dedisperse == 'by-channel':
@@ -201,8 +202,7 @@ def fold(fh, comm, samplerate, fedge, fedge_at_top, nchan,
             # LOFAR returns complex64 (count/nchan, nchan)
             # LOFAR "combined" file class can do lots of seeks, we minimize
             # that with the 'seek_record_read' routine
-            raw = fh.seek_record_read(int((nskip+j)*fh.blocksize),
-                                      fh.blocksize)
+            raw = fh.seek_record_read(int((nskip+j)*fh.blocksize), fh.blocksize)
         except(EOFError, IOError) as exc:
             print("Hit {0!r}; writing pgm's".format(exc))
             break
@@ -367,9 +367,11 @@ class Folder(dict):
         # ??? (1./fh['SUBINT'].header['TBIN']*u.Hz).to(u.MHz)
         self['fedge'] = fh.fedge
         self['fedge_at_top'] = fh.fedge_at_top
-        self['nchan'] = fh['SUBINT'].header['NCHAN']
-        self['ngate'] = fh['SUBINT'].header['NBIN_PRD']
-
+#        self['nchan'] = fh['SUBINT'].header['NCHAN']
+#        self['ngate'] = fh['SUBINT'].header['NBIN_PRD']
+        self['nchan'] = 512 #lc
+        self['ngate'] = 50  #lc
+        fh.blocksize = 2**24 #lc
         # update arguments with passed kwargs
         for k in kwargs:
             if k in fold_argnames:

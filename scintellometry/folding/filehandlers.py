@@ -148,12 +148,13 @@ class MultiFile(psrFITS):
         block, extra = divmod(offset, self.blocksize)
         if block > len(self.indices):
             raise EOFError('At end of file in MultiFile.read')
-
         # check how many of the indices preceding the block were in each file
         indices = self.indices[:block]
-        fh_offsets = np.bincount(indices[indices >= 0],
-                                 minlength=len(self.fh_raw)) * self.blocksize
+#        fh_offsets = np.bincount(indices[indices >= 0],
+#                                 minlength=len(self.fh_raw)) * self.blocksize
+        fh_offsets = np.bincount(indices[indices >= 0], minlength=1)
         # add the extra bytes to the correct file
+        print("yes", self.indices, block, self.indices[block], extra)
         if self.indices[block] >= 0:
             fh_offsets[self.indices[block]] += extra
 
@@ -240,18 +241,24 @@ class AROchdata(MultiFile):
     telescope = 'AROch'
 
     def __init__(self, raw_files, comm=None, blocksize=2**24,
-                 refloat=True, samplerate=200.*u.MHz):
+                 refloat=True, samplerate=200.*u.MHz, dtype='cu4bit'):
 
         self.nchan = 512
-        self.fedge = 100
-        self.fedge_at_top = 200
+        self.dtype=dtype
+        self.fedge = (100*u.Hz).to(u.MHz)
+        self.fedge_at_top = (200*u.Hz).to(u.MHz)
         self.blocksize = blocksize
         self.samplerate = samplerate
         self.recordsize = 1 # Not actually sure what this is
         self.dtsample = (1./samplerate).to(u.s)
-        self.fh_raw = [] 
+        self.comm = MPI.COMM_SELF
+        self.fh_raw = [MPI.File.Open(self.comm, '/scratch/p/pen/klages/ARO/pulsar_140613_b1957p20_v0/0000000.dat')]
         self.time0 = Time(0, format='unix')
         self.setsize = 10
+        self.indices = np.array([0])
+        self.fh_links = []
+        self.offset = 0
+        self.frequencies = np.linspace(self.fedge_at_top, self.fedge, self.nchan)
 
     def ntint(self, nchan):
         """
@@ -274,9 +281,40 @@ class AROchdata(MultiFile):
         return ("<open lofar polarization pair {}>"
                 .format(self.fh_raw))
 
-    def close(self):
-        for fh in self.fh_raw:
-            fh.close()
+#    def close(self):
+#        for fh in self.fh_raw:
+#            print(fh)
+#            fh.close()
+
+header_defaults['AROch'] = {
+    'PRIMARY': {'TELESCOP':'LOFAR',
+                'IBEAM':1, 'FD_POLN':'LIN',
+                'OBS_MODE':'SEARCH',
+                'ANT_X':0, 'ANT_Y':0, 'ANT_Z':0, 'NRCVR':1,
+                'FD_HAND':1, 'FD_SANG':0, 'FD_XYPH':0,
+                'BE_PHASE':0, 'BE_DCC':0, 'BE_DELAY':0,
+                'TRK_MODE':'TRACK',
+                'TCYCLE':0, 'OBSFREQ':300, 'OBSBW':100,
+                'OBSNCHAN':20, 'CHAN_DM':0,
+                'EQUINOX':2000.0, 'BMAJ':1, 'BMIN':1, 'BPA':0,
+                'SCANLEN':1, 'FA_REQ':0,
+                'CAL_FREQ':0, 'CAL_DCYC':0,
+                'CAL_PHS':0, 'CAL_NPHS':0,
+                'STT_IMJD':54000, 'STT_SMJD':0, 'STT_OFFS':0},
+    'SUBINT': {'INT_TYPE': 'TIME',
+               'SCALE': 'FluxDen',
+               'POL_TYPE': 'AABB',
+               'NPOL':1,
+               'NBIN':1, 'NBIN_PRD':1,
+               'PHS_OFFS':0,
+               'NBITS':1,
+               'ZERO_OFF':0, 'SIGNINT':0,
+               'NSUBOFFS':0,
+               'NCHAN':1,
+               'CHAN_BW':1,
+               'DM':0, 'RM':0, 'NCHNOFFS':0,
+               'NSBLK':1}}
+
 
 #    ____  ____   ___
 #   /    ||    \ /   \
