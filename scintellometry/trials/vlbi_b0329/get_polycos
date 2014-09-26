@@ -1,10 +1,7 @@
 #!/bin/bash
-if _$1 == _; then
-  psr=b1919+21
-else
-  psr=$1
-fi
+psr=${1:-b1919+21}
 cp -p ../../ephemerides/psr$psr.par .
+grep -n TZRFRQ psr$psr.par || \
 cat <<EOD >>psr$psr.par
 TZRFREQ 1400.
 TZRMJD 56000.

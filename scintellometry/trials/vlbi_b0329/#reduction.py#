@@ -236,7 +236,7 @@ def CL_parser():
         "Default is start of the observation")
     d_parser.add_argument(
         '-t1', '--tend', '-dt', '--duration', type=str, default=None,
-        help="Timestamp within the observation run to end processing or "
+        help="Timestampself.timestamp_file within the observation run to end processing or "
         "duration (in seconds) of the section to process.")
     d_parser.add_argument(
         '--rfi_filter_raw', action='store_true',

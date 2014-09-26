@@ -32,7 +32,7 @@ def obsdata(conf='observations.conf'):
 
 class telescope(dict):
     def __init__(self, name):
-        assert name in ['aro', 'lofar', 'gmrt']
+        assert name in ['aro', 'lofar', 'gmrt', 'arochime']
         self['name'] = name
         self['observations'] = []
 
@@ -65,7 +65,8 @@ class telescope(dict):
         """
         seq = {'aro':self._aro_seq_raw_files,
                'lofar':self._lofar_file,
-               'gmrt':self._gmrt_twofiles}
+               'gmrt':self._gmrt_twofiles,
+               'arochime':self._arochime_files}
         return seq[self['name']](key, **kwargs)
 
     def _aro_seq_raw_files(self, key):
@@ -118,6 +119,20 @@ class telescope(dict):
         file2 = file_fmt.format(fnbase, pol, 2)
         timestamps = file1.split('.Pol')[0] + '.timestamp'
         return (timestamps, [file1, file2])
+
+    def _arochime_files(self, key):
+        """"
+        return a 2-tuple for GMRT observation 'key':
+        (timestamp file, [file1, file2])
+        """
+        obs = self[key]
+        first = int(obs.get('first', self.get('first', 0)))
+        last = int(obs.get('last', self.get('last', first)))
+        fnbase = obs.get('fnbase', self.get('fnbase', None))
+        file_fmt = obs.get('file_fmt', self.get('file_fmt', None))
+        files = [file_fmt.format(fnbase, number)
+                 for number in xrange(first, last+1)]
+        return (files,)
 
 
 class observation(dict):
